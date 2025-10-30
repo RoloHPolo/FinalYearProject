@@ -441,13 +441,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ac796aab904e734a9fea7082d62866b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mvSpd: 7
+  walkSpd: 4
+  sprintSpd: 7
   drag: 5
+  jumpForce: 6
+  jumpCD: 0.25
+  airMulti: 0.4
+  jumpBind: 32
+  sprintBind: 304
   height: 2
   ground:
     serializedVersion: 2
     m_Bits: 128
   orient: {fileID: 1015726233}
+  state: 0
 --- !u!1 &1531594479
 GameObject:
   m_ObjectHideFlags: 0

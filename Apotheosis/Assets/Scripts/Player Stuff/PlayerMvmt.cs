@@ -5,8 +5,19 @@ using UnityEngine;
 public class PlayerMvmt : MonoBehaviour
 {
     [Header("Movement")]
-    public float mvSpd;
+    private float mvSpd;
+    public float walkSpd;
+    public float sprintSpd;
     public float drag;
+
+    public float jumpForce;
+    public float jumpCD;
+    public float airMulti;
+    bool canJump;
+
+    [Header("Keybinds")]
+    public KeyCode jumpBind = KeyCode.Space;
+    public KeyCode sprintBind = KeyCode.LeftShift;
 
     [Header("Ground Check")]
     public float height;
@@ -21,10 +32,19 @@ public class PlayerMvmt : MonoBehaviour
     Vector3 mvDir;
     Rigidbody rb;
 
+    public MvmtState state;
+    public enum MvmtState
+    {
+        walking,
+        sprinting,
+        inAir
+    }
+
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
+        canJump = true;
     }
 
     private void Update()
@@ -34,6 +54,7 @@ public class PlayerMvmt : MonoBehaviour
 
         GetInput();
         ControlSpeed();
+        StateHandling();
 
         //drag
         if (grounded)
@@ -52,12 +73,41 @@ public class PlayerMvmt : MonoBehaviour
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
 
+        if (Input.GetKey(jumpBind) && canJump && grounded)
+        {
+            canJump = false;
+            Jump();
+            Invoke(nameof(ResetJump), jumpCD);
+        }
+    }
+
+    private void StateHandling()
+    {
+        //when sprinting
+        if (grounded && Input.GetKey(sprintBind))
+        {
+            state = MvmtState.sprinting;
+            mvSpd = sprintSpd;
+        } else if (grounded)
+        {
+            state = MvmtState.walking;
+            mvSpd = walkSpd;
+        } else
+        {
+            state = MvmtState.inAir;
+        }
     }
 
     private void Movement()
     {
         mvDir = orient.forward * verticalInput + orient.right * horizontalInput;
-        rb.AddForce(mvDir * mvSpd * 10f, ForceMode.Force);
+
+        if (grounded)
+            rb.AddForce(mvDir * mvSpd * 10f, ForceMode.Force);
+        else if (!grounded)
+            rb.AddForce(mvDir * mvSpd * 10f * airMulti, ForceMode.Force);
+
+
     }
 
     private void ControlSpeed()
@@ -70,5 +120,18 @@ public class PlayerMvmt : MonoBehaviour
             Vector3 limitedVel = flatVel.normalized * mvSpd;
             rb.velocity = new Vector3(limitedVel.x, rb.velocity.y, limitedVel.z);
         }
+    }
+
+    private void Jump()
+    {
+        //reset y vel
+        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+
+        rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
+    }
+
+    public void ResetJump()
+    {
+        canJump = true;
     }
 }
